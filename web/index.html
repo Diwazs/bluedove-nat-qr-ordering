@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blue Dove - Order</title>
+<style>
+:root{--bg:#f2f5f8;--ink:#14202b;--mute:#5b6b7a;--blue:#1f4e9c;--line:#d5dde5;--card:#fff;--ok:#1e7a4c}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1720;--ink:#e8eef4;--mute:#93a3b3;--blue:#6ea2f0;--line:#2a3846;--card:#17212c;--ok:#5fcf98}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Trebuchet MS","Segoe UI",system-ui,sans-serif;padding-bottom:110px}
+header{padding:22px 18px 8px;max-width:640px;margin:auto}
+h1{margin:0;font-size:26px;letter-spacing:-.3px}
+header p{margin:4px 0 0;color:var(--mute)}
+main{max-width:640px;margin:auto;padding:0 18px}
+h2{font-size:15px;margin:22px 0 6px;color:var(--mute);font-weight:600}
+.item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.item .info{flex:1}
+.name{font-weight:700}
+.meta{font-size:13px;color:var(--mute)}
+.desc{font-size:14px;margin-top:2px}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:34px;height:34px;border-radius:50%;border:1px solid var(--blue);background:transparent;color:var(--blue);font-size:20px;cursor:pointer}
+.qty button:focus-visible,.go:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.qty span{min-width:18px;text-align:center;font-weight:700}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 18px}
+.bar div{max-width:640px;margin:auto;display:flex;gap:10px;align-items:center}
+input{flex:1;min-width:0;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.go{padding:12px 18px;border:0;border-radius:8px;background:var(--blue);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.go:disabled{opacity:.45;cursor:not-allowed}
+#done{display:none;text-align:center;padding:50px 18px}
+#done .tok{font-size:84px;font-weight:800;color:var(--ok);line-height:1}
+#err{color:#c0392b;max-width:640px;margin:8px auto 0;padding:0 18px}
+a{color:var(--blue)}
+.btn{display:inline-block;margin:6px 0 0;padding:13px 20px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none}
+.btn:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){.item{transition:border-color .15s}.item.on{border-color:var(--blue)}}
+</style>
+</head>
+<body>
+<header><h1>Blue Dove</h1><p>Pick your items, place the order, watch for your token number.</p></header>
+<main id="menu"></main>
+<div id="err" role="alert"></div>
+<section id="done"><div class="tok" id="tok"></div><p><strong>This is your token number.</strong><br>Watch for it on the ready board. Keep this screen open.</p><p id="tg" style="display:none"><a class="btn" id="tglink" target="_blank" rel="noopener">Join the ready board on Telegram</a><br><span style="color:var(--mute);font-size:14px">Optional. Your token also stays on this screen.</span></p><p><a href="" onclick="location.reload();return false">Place another order</a></p></section>
+<div class="bar" id="bar"><div>
+  <input id="cust" placeholder="Your name (optional)" aria-label="Your name">
+  <button class="go" id="go" disabled>Place order</button>
+</div></div>
+<script>
+// ===== EDIT THESE =====
+const ORDER_URL = "https://YOUR-N8N-URL/webhook/bluedove-order";
+const TELEGRAM_URL = "";  // paste the ready-board CHANNEL invite link (https://t.me/...)
+const CHAT_URL  = "";   // paste your n8n Chat Trigger public URL to show the menu-assistant link
+// ======================
+const MENU = [
+ {id:"B01",name:"Veg Burger",cat:"Mains",price:89,diet:"Veg",spice:"Mild",desc:"Crisp potato-peas patty, mint mayo. Good light lunch."},
+ {id:"B02",name:"Paneer Wrap",cat:"Mains",price:109,diet:"Veg",spice:"Medium",desc:"Grilled paneer, onions, green chutney. Filling."},
+ {id:"B03",name:"Chicken Roll",cat:"Mains",price:129,diet:"Non-veg",spice:"Medium",desc:"Egg-wrapped roll with spiced chicken. Most ordered."},
+ {id:"B04",name:"Masala Fries",cat:"Sides",price:69,diet:"Veg",spice:"Medium",desc:"Shoestring fries tossed in chaat masala. Quick to make."},
+ {id:"B05",name:"Cold Coffee",cat:"Drinks",price:79,diet:"Veg",spice:"None",desc:"Thick and sweet, served over ice."},
+ {id:"B06",name:"Lemon Soda",cat:"Drinks",price:49,diet:"Veg",spice:"None",desc:"Sweet or salted. Fastest item on the menu."}
+];
+const qty = {};
+const root = document.getElementById("menu");
+[...new Set(MENU.map(m=>m.cat))].forEach(cat=>{
+  const h=document.createElement("h2"); h.textContent=cat; root.appendChild(h);
+  MENU.filter(m=>m.cat===cat).forEach(m=>{
+    const d=document.createElement("div"); d.className="item"; d.id="i"+m.id;
+    d.innerHTML=`<div class="info"><div class="name">${m.name} - Rs ${m.price}</div>
+      <div class="meta">${m.diet}${m.spice!=="None"?", spice: "+m.spice:""}</div><div class="desc">${m.desc}</div></div>
+      <div class="qty"><button aria-label="Remove one ${m.name}" data-d="-1">-</button><span>0</span><button aria-label="Add one ${m.name}" data-d="1">+</button></div>`;
+    d.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+      qty[m.id]=Math.max(0,(qty[m.id]||0)+Number(b.dataset.d));
+      d.querySelector("span").textContent=qty[m.id]; d.classList.toggle("on",qty[m.id]>0); refresh();
+    });
+    root.appendChild(d);
+  });
+});
+if(CHAT_URL){const p=document.createElement("p");p.innerHTML=`Can't decide? <a href="${CHAT_URL}" target="_blank" rel="noopener">Ask the menu assistant</a>`;root.prepend(p);}
+const go=document.getElementById("go");
+function cart(){return MENU.filter(m=>qty[m.id]>0).map(m=>({id:m.id,name:m.name,qty:qty[m.id],price:m.price}));}
+function refresh(){const c=cart();const t=c.reduce((s,i)=>s+i.qty*i.price,0);go.disabled=!c.length;go.textContent=c.length?`Place order - Rs ${t}`:"Place order";}
+go.onclick=async()=>{
+  go.disabled=true; document.getElementById("err").textContent="";
+  try{
+    const r=await fetch(ORDER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({customer:document.getElementById("cust").value.trim()||"Guest",items:cart()})});
+    if(!r.ok) throw new Error(r.status);
+    const j=await r.json();
+    document.getElementById("tok").textContent="#"+j.token;
+    document.getElementById("menu").style.display="none";document.getElementById("bar").style.display="none";
+    document.getElementById("done").style.display="block";
+    if(TELEGRAM_URL){document.getElementById("tglink").href=TELEGRAM_URL;document.getElementById("tg").style.display="block";}
+  }catch(e){
+    document.getElementById("err").textContent="Order not sent. Check your connection and tap Place order again, or tell the counter.";
+    go.disabled=false;
+  }
+};
+</script>
+</body>
+</html>

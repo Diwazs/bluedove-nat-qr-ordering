@@ -1,0 +1,7 @@
+item_id,name,category,price,diet,spice,description
+"B01","Veg Burger","Mains",89,"Veg","Mild","Crisp potato-peas patty, mint mayo. Good light lunch."
+"B02","Paneer Wrap","Mains",109,"Veg","Medium","Grilled paneer, onions, green chutney. Filling."
+"B03","Chicken Roll","Mains",129,"Non-veg","Medium","Egg-wrapped roll with spiced chicken. Most ordered."
+"B04","Masala Fries","Sides",69,"Veg","Medium","Shoestring fries tossed in chaat masala. Quick to make."
+"B05","Cold Coffee","Drinks",79,"Veg","None","Thick and sweet, served over ice."
+"B06","Lemon Soda","Drinks",49,"Veg","None","Sweet or salted. Fastest item on the menu."

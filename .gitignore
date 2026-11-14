@@ -1,0 +1,6 @@
+.env
+*.log
+.DS_Store
+node_modules/
+# never commit tokens, credentials, raw survey data or client logos
+secrets*
