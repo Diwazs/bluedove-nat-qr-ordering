@@ -109,3 +109,13 @@ n8n, Google Sheets API, Telegram Bot API, HTML/CSS/JavaScript, static hosting.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Screenshots
+
+n8n workflow: the order-intake flow run end to end in the editor (order, log, kitchen alert, reply with token).
+
+![n8n workflow canvas](docs/screenshots/n8n-workflow.png)
+
+Order page on mobile.
+
+![Order page on mobile](docs/screenshots/order-page.png)
